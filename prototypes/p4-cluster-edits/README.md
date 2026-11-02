@@ -62,8 +62,7 @@ Memory at 5M: 689 MB (159 MB of it the render buffer); 2.8 GB at 20M.
 
 ## Not measured, and limits
 
-- **No GPU numbers yet.** Nothing here measures upload, drawing, culling or frame time. Step 2 adds a Qt RHI viewer that does, to run on a real graphics card.
-- **One machine.** The reference hardware (Windows, 32 GB) has not been measured.
+- **One GPU, and a weak one.** The only real GPU run is on an Intel integrated GPU under Linux (below). The reference hardware (Windows, 32 GB) has not been measured.
 - **Shape and edit type.** The surface is a sphere-like grid and edits are displacement only. Normals use incident-face weighting. A real sculpt is less regular.
 - **Single level of detail.** No hierarchy, streaming or occlusion culling.
 
@@ -97,6 +96,18 @@ The release archive includes it as `bin/meshify_p4_viewer`.
 ### What was checked here
 
 The sandbox has no graphics card, so the viewer ran on Mesa's software renderer (llvmpipe) under a virtual display. That shows the viewer works: the mesh draws correctly, edits appear, and partial uploads match a full upload. It says nothing about speed, and the frame times from it should be ignored.
+
+### Results on a real GPU
+
+Intel HD Graphics 630 (integrated), Mesa 26.2.4, OpenGL 4.6, Linux (Bazzite), 5M vertices (4,995,962 vertices, 9,991,920 triangles), 1280x720. First frame with the full 159 MB upload: 38 ms. One frame drawn and read back with no edit: p50 18.2 ms, p95 18.9 ms.
+
+| Brush | Radius (mm) | Upload (KB) | CPU update p50 (ms) | Edit to GPU done p50 (ms) | p95 (ms) | max (ms) |
+| --- | --- | --- | --- | --- | --- | --- |
+| fine | 0.5 | 16 | 0.42 | 18.8 | 19.4 | 20.3 |
+| medium | 2.0 | 153 | 1.04 | 19.8 | 22.5 | 25.6 |
+| broad | 8.0 | 1856 | 7.73 | 29.6 | 42.1 | 71.6 |
+
+The 50 ms target on p95 passes for all three brushes, on an integrated GPU. Most of the time for fine and medium brushes is the frame itself (drawing 10 million triangles in one call plus readback, 18 ms); the edit adds 0.6 and 1.6 ms. The broad brush adds about 11 ms at p50, but its worst case (71.6 ms) is over 50 ms, so broad strokes still want the reduced-detail preview from finding 3.
 
 ### Limits of the viewer
 
