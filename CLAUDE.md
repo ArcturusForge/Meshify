@@ -4,7 +4,7 @@ Read this first instead of exploring the repo. Keep sessions cheap: read only th
 
 ## What this is
 
-Desktop CAD + mesh + 3D-print-prep app. C++20, Qt 6 (later), Open CASCADE (OCCT) kernel. GPL-3.0.
+Desktop CAD + mesh + 3D-print-prep app. C++20, Qt 6 (P3 onward), Open CASCADE (OCCT) kernel. GPL-3.0.
 Currently **Stage 0**: small prototypes under `prototypes/`, each answering one question from `docs/adr/0001-core-stack.md`. No production code yet.
 
 ## Layout
@@ -25,6 +25,7 @@ ctest --test-dir build --output-on-failure
 
 Build one target when that is all you changed: `cmake --build build --target p1_token_tests`.
 OCCT on Ubuntu: `apt install libocct-modeling-algorithms-dev libocct-data-exchange-dev libtbb-dev`.
+Qt 6 on Ubuntu (P3): `apt install qt6-base-dev qt6-base-private-dev libxcb1-dev`; the docking library is fetched by CMake. Test with `QT_QPA_PLATFORM=offscreen`.
 OCCT 7.8 moved the STL writer to `TKDESTL`; CMake already handles both.
 
 ## Releases
