@@ -101,6 +101,8 @@ jobs:
           # Empty PATH so Windows cannot pick DLLs up from the conda env.
           env PATH=/nonexistent ./bin/p1_token "$RUNNER_TEMP/smoke/token.stl"
           test -s "$RUNNER_TEMP/smoke/token.stl"
+          # The window opens and closes. The offscreen platform needs no display.
+          env PATH=/nonexistent QT_QPA_PLATFORM=offscreen ./bin/meshify --smoke-test
 
       - uses: actions/upload-artifact@v4
         if: inputs.package
