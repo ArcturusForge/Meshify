@@ -10,3 +10,4 @@ enable_testing()
 # Stage 0 prototypes. Each one answers a single architecture question from
 # docs/adr/0001-core-stack.md and is not production code.
 add_subdirectory(prototypes/p1-token-identity)
+add_subdirectory(prototypes/p2-occt-stress)
