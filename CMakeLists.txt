@@ -14,5 +14,6 @@ include(MeshifyPackaging)
 # docs/adr/0001-core-stack.md and is not production code.
 add_subdirectory(prototypes/p1-token-identity)
 add_subdirectory(prototypes/p2-occt-stress)
+add_subdirectory(prototypes/p3-docking-shell)
 
 meshify_finalize_install()
