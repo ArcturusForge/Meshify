@@ -1,0 +1,7 @@
+{
+  "name": "faulty",
+  "version": "1.0.0",
+  "api": 1,
+  "entry": "plugin.py",
+  "operations": ["raise_midway", "crash", "hang", "bad_index", "nan_out", "chatty"]
+}

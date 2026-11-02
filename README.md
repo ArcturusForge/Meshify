@@ -25,6 +25,7 @@ Meshify is free software under the [GNU General Public License v3.0](LICENSE).
 | [P1](prototypes/p1-token-identity) | Do fillets and other later steps survive upstream edits on Open CASCADE? | Passed: 20 of 20 edits |
 | [P2](prototypes/p2-occt-stress) | Does Open CASCADE handle 30 hard fillet, shell, offset, boolean and relief cases? | Passed: 27 of 27, all 3 bad inputs rejected |
 | [P3](prototypes/p3-docking-shell) | Does a Qt 6 docking shell recover a layout saved on a disconnected monitor (UX-03)? | Passed on all three systems; real two-monitor run pending |
-| [P4](prototypes/p4-cluster-edits) | Can a 5M-vertex model take local edits in under 50 ms? | CPU side: fine and medium brushes pass, broad brush over budget. GPU viewer added; timings pending a real graphics card |
+| [P4](prototypes/p4-cluster-edits) | Can a 5M-vertex model take local edits in under 50 ms? | Passes on an integrated Intel GPU (p95 19, 22 and 42 ms for fine, medium and broad brushes); the broad brush's worst case is still over 50 ms |
+| [P5](prototypes/p5-plugin-history) | Can a Python plugin operation take part in undo, save and reopen, and fail safely? | Yes: nine failure cases leave the model untouched and a missing plugin is reported on reopen; JSON over a pipe is too slow for dense meshes |
 
 The architecture decision record is in [docs/adr/0001-core-stack.md](docs/adr/0001-core-stack.md).
