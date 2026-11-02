@@ -16,6 +16,7 @@ endif()
 
 add_executable(p1_token src/main.cpp)
 target_link_libraries(p1_token PRIVATE p1_token_lib TKMesh ${P1_STL_LIB})
+meshify_install(p1_token)
 
 add_executable(p1_token_tests tests/token_tests.cpp)
 target_link_libraries(p1_token_tests PRIVATE p1_token_lib)

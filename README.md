@@ -10,6 +10,10 @@ Implementation has not started. The project is in **Stage 0**: small prototypes 
 - Mesh work planned on Manifold, OpenVDB and meshoptimizer.
 - Fully offline; real-world units throughout; no telemetry by default.
 
+## Releases
+
+Pushing a tag such as `v0.1.0` builds Windows, macOS and Linux archives and publishes them as a [GitHub Release](https://github.com/ArcturusForge/Meshify/releases). Versions follow [SemVer](https://semver.org); 0.x and suffixed versions (`v0.2.0-alpha.1`) are marked pre-release. Running the Release workflow by hand builds the archives without publishing.
+
 ## Licence
 
 Meshify is free software under the [GNU General Public License v3.0](LICENSE).
