@@ -40,9 +40,9 @@ The layout file is JSON (`format: meshify-layout`, `version: 1`): name, screens,
 
 The offscreen platform has one screen. These tests show the logic and that ADS restores and floats panels on all three systems in CI. They do **not** show how each window manager places windows when a real monitor is unplugged. That needs a two-monitor check on the reference machine:
 
-1. Run `p3_shell`. Use *Layout > Save layout...* with a panel popped out onto the second monitor.
+1. Run `meshify` (the shell; target `p3_shell`). Use *Layout > Save layout...* with a panel popped out onto the second monitor.
 2. Close the app and unplug or disable the second monitor.
-3. Run `p3_shell` again and use *Layout > Import layout...* with the saved file.
+3. Run `meshify` again and use *Layout > Import layout...* with the saved file.
 4. Expect a summary naming the missing screen, and the panel on your main screen with its title bar reachable.
 5. Repeat on macOS and Linux (X11 and Wayland) when available. Wayland does not let applications choose window positions, so floating panels may open wherever the compositor puts them.
 
@@ -53,8 +53,14 @@ Needs Qt 6 and network access (to fetch ADS).
 ```sh
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build --target p3_shell p3_docking_tests
-./build/prototypes/p3-docking-shell/p3_shell
+./build/prototypes/p3-docking-shell/meshify
 ctest --test-dir build -R p3
 ```
+
+## Release archive
+
+The shell is installed as `bin/meshify` with Qt, the X11 (`xcb`), Wayland (Linux) and offscreen platform plugins, and `qt.conf`. The C library and graphics driver libraries are not bundled; they come from the system. CI unpacks the archive and runs `meshify --smoke-test` with the offscreen platform.
+
+On Linux, Qt chooses Wayland when a Wayland session is running and falls back to X11 (XWayland). Set `QT_QPA_PLATFORM=xcb` to force X11.
 
 Without Qt 6 the prototype is skipped, so P1 and P2 still build.

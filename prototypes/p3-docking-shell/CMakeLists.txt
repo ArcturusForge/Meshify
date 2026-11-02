@@ -24,7 +24,8 @@ set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(ads
     GIT_REPOSITORY https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System.git
     GIT_TAG 4.4.1
-    GIT_SHALLOW ON)
+    GIT_SHALLOW ON
+    EXCLUDE_FROM_ALL)  # keeps the ADS library out of the install tree
 FetchContent_MakeAvailable(ads)
 
 set(CMAKE_AUTOMOC ON)
@@ -32,8 +33,24 @@ add_library(p3_layout STATIC src/layout.cpp src/shell.cpp)
 target_include_directories(p3_layout PUBLIC src)
 target_link_libraries(p3_layout PUBLIC Qt6::Widgets ads::qtadvanceddocking-qt6)
 
+# Shipped as "meshify": the Stage 0 shell, with empty placeholder panels.
 add_executable(p3_shell src/main.cpp)
+set_target_properties(p3_shell PROPERTIES OUTPUT_NAME meshify)
 target_link_libraries(p3_shell PRIVATE p3_layout)
+meshify_install(p3_shell)
+# Copies Qt's platform plugins (X11, Wayland, ...) and libraries into the release.
+# The offscreen platform lets the release be smoke-tested without a display.
+# On Linux, also ship native Wayland (Bazzite, Fedora, recent Ubuntu).
+set(p3_extra_plugins qoffscreen)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    list(APPEND p3_extra_plugins qwayland)
+endif()
+qt_generate_deploy_app_script(TARGET p3_shell OUTPUT_SCRIPT p3_deploy_script
+    NO_UNSUPPORTED_PLATFORM_ERROR NO_TRANSLATIONS
+    INCLUDE_PLUGINS ${p3_extra_plugins}
+    PRE_EXCLUDE_REGEXES ${MESHIFY_PRE_EXCLUDE_REGEXES}
+    POST_EXCLUDE_REGEXES ${MESHIFY_POST_EXCLUDE_REGEXES})
+install(SCRIPT ${p3_deploy_script})
 
 add_executable(p3_docking_tests tests/docking_tests.cpp)
 target_link_libraries(p3_docking_tests PRIVATE p3_layout)

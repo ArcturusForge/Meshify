@@ -17,6 +17,19 @@ endif()
 
 set_property(GLOBAL PROPERTY MESHIFY_INSTALL_TARGETS "")
 
+# Libraries that must come from the user's system, not the archive. Bundling the
+# C library or the graphics drivers' front ends breaks on machines newer than
+# the build environment. Used for the OCCT dependencies and for Qt's deploy script.
+# No backslashes or parentheses: Qt's deploy script generator mangles them.
+set(MESHIFY_PRE_EXCLUDE_REGEXES
+    "^api-ms-" "^ext-ms-"
+    "^libc[.]so" "^libm[.]so" "^libdl[.]so" "^libpthread[.]so" "^librt[.]so"
+    "^libresolv[.]so" "^ld-linux" "^libgcc_s[.]so"
+    "^libGL[.]so" "^libGLX" "^libGLdispatch" "^libEGL" "^libOpenGL" "^libX11")
+set(MESHIFY_POST_EXCLUDE_REGEXES
+    "^/lib" "^/usr/lib" "^/System/" "^/usr/lib/system"
+    ".*[Ss]ystem32/.*" ".*[Ww]indows/.*")
+
 function(meshify_install)
     set_property(GLOBAL APPEND PROPERTY MESHIFY_INSTALL_TARGETS ${ARGN})
     if(APPLE)
@@ -55,13 +68,8 @@ function(meshify_finalize_install)
 
     install(RUNTIME_DEPENDENCY_SET meshify_runtime_deps
         DIRECTORIES ${search_dirs}
-        PRE_EXCLUDE_REGEXES
-            "^api-ms-" "^ext-ms-"
-            "^(lib)?c\\.so" "^libm\\.so" "^libdl\\.so" "^libpthread\\.so" "^librt\\.so"
-            "^ld-linux" "^libgcc_s\\.so" "^libGL\\.so" "^libGLX" "^libX11"
-        POST_EXCLUDE_REGEXES
-            "^/lib" "^/usr/lib" "^/System/" "^/usr/lib/system"
-            ".*[Ss]ystem32/.*" ".*[Ww]indows/.*"
+        PRE_EXCLUDE_REGEXES ${MESHIFY_PRE_EXCLUDE_REGEXES}
+        POST_EXCLUDE_REGEXES ${MESHIFY_POST_EXCLUDE_REGEXES}
         RUNTIME DESTINATION ${dep_dest}
         LIBRARY DESTINATION ${dep_dest}
         FRAMEWORK DESTINATION ${dep_dest})
