@@ -15,5 +15,6 @@ include(MeshifyPackaging)
 add_subdirectory(prototypes/p1-token-identity)
 add_subdirectory(prototypes/p2-occt-stress)
 add_subdirectory(prototypes/p3-docking-shell)
+add_subdirectory(prototypes/p4-cluster-edits)
 
 meshify_finalize_install()
