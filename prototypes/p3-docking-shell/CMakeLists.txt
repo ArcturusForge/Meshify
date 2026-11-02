@@ -37,24 +37,7 @@ target_link_libraries(p3_layout PUBLIC Qt6::Widgets ads::qtadvanceddocking-qt6)
 add_executable(p3_shell src/main.cpp)
 set_target_properties(p3_shell PROPERTIES OUTPUT_NAME meshify)
 target_link_libraries(p3_shell PRIVATE p3_layout)
-meshify_install(p3_shell)
-# Copies Qt's platform plugins (X11, Wayland, ...) and libraries into the release.
-# Qt's deploy script generator gained the options used here in Qt 6.5. Older Qt
-# (Ubuntu 24.04 has 6.4) builds and runs the shell but cannot make a release archive.
-if(Qt6_VERSION VERSION_GREATER_EQUAL 6.5)
-    # The offscreen platform lets the release be smoke-tested without a display.
-    # On Linux, also ship native Wayland (Bazzite, Fedora, recent Ubuntu).
-    set(p3_extra_plugins qoffscreen)
-    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        list(APPEND p3_extra_plugins qwayland)
-    endif()
-    qt_generate_deploy_app_script(TARGET p3_shell OUTPUT_SCRIPT p3_deploy_script
-        NO_UNSUPPORTED_PLATFORM_ERROR NO_TRANSLATIONS
-        INCLUDE_PLUGINS ${p3_extra_plugins}
-        PRE_EXCLUDE_REGEXES ${MESHIFY_PRE_EXCLUDE_REGEXES}
-        POST_EXCLUDE_REGEXES ${MESHIFY_POST_EXCLUDE_REGEXES})
-    install(SCRIPT ${p3_deploy_script})
-endif()
+meshify_install_qt_app(p3_shell)
 
 add_executable(p3_docking_tests tests/docking_tests.cpp)
 target_link_libraries(p3_docking_tests PRIVATE p3_layout)

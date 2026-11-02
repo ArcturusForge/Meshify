@@ -334,6 +334,42 @@ EditResult ClusterMesh::brush(const Vec3& center, float radius, float depth) {
     return out;
 }
 
+bool ClusterMesh::raycast(const Vec3& o, const Vec3& d, Vec3* hit) const {
+    float best = 1e30f;
+    for (size_t ci = 0; ci < m_clusters.size(); ++ci) {
+        // Ray against the cluster's bounding sphere first.
+        const ClusterBounds& b = m_bounds[ci];
+        const float lx = b.center[0] - o.x, ly = b.center[1] - o.y, lz = b.center[2] - o.z;
+        const float tc = lx * d.x + ly * d.y + lz * d.z;
+        const float miss2 = lx * lx + ly * ly + lz * lz - tc * tc;
+        if (miss2 > b.radius * b.radius || tc + b.radius < 0 || tc - b.radius > best) continue;
+        const Cluster& c = m_clusters[ci];
+        for (uint32_t t = 0; t < c.triangleCount; ++t) {
+            const uint8_t* idx = &m_clusterTris[c.triangleOffset + 3 * t];
+            const Vec3& p0 = m_pos[m_clusterVerts[c.vertexOffset + idx[0]]];
+            const Vec3& p1 = m_pos[m_clusterVerts[c.vertexOffset + idx[1]]];
+            const Vec3& p2 = m_pos[m_clusterVerts[c.vertexOffset + idx[2]]];
+            // Moller-Trumbore.
+            const Vec3 e1 = sub(p1, p0), e2 = sub(p2, p0);
+            const Vec3 pv = cross(d, e2);
+            const float det = e1.x * pv.x + e1.y * pv.y + e1.z * pv.z;
+            if (std::fabs(det) < 1e-12f) continue;
+            const float inv = 1.0f / det;
+            const Vec3 tv = sub(o, p0);
+            const float u = (tv.x * pv.x + tv.y * pv.y + tv.z * pv.z) * inv;
+            if (u < 0 || u > 1) continue;
+            const Vec3 qv = cross(tv, e1);
+            const float v = (d.x * qv.x + d.y * qv.y + d.z * qv.z) * inv;
+            if (v < 0 || u + v > 1) continue;
+            const float tt = (e2.x * qv.x + e2.y * qv.y + e2.z * qv.z) * inv;
+            if (tt > 0 && tt < best) best = tt;
+        }
+    }
+    if (best >= 1e30f) return false;
+    if (hit) *hit = {o.x + d.x * best, o.y + d.y * best, o.z + d.z * best};
+    return true;
+}
+
 size_t ClusterMesh::memoryBytes() const {
     auto bytes = [](const auto& v) { return v.capacity() * sizeof(typename std::decay_t<decltype(v)>::value_type); };
     return bytes(m_pos) + bytes(m_nrm) + bytes(m_tris) + bytes(m_vtxTriStart) + bytes(m_vtxTri) + bytes(m_vtxSlotStart) +

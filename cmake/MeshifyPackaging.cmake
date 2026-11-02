@@ -39,6 +39,26 @@ function(meshify_install)
     endif()
 endfunction()
 
+# For Qt applications: registers the target and bundles Qt's libraries and
+# platform plugins (X11, Wayland on Linux, offscreen) next to it. Needs Qt 6.5
+# or newer for the deploy script; older Qt still builds the target but the
+# release archive would lack Qt.
+function(meshify_install_qt_app target)
+    meshify_install(${target})
+    if(Qt6_VERSION VERSION_GREATER_EQUAL 6.5)
+        set(extra_plugins qoffscreen)
+        if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+            list(APPEND extra_plugins qwayland)
+        endif()
+        qt_generate_deploy_app_script(TARGET ${target} OUTPUT_SCRIPT deploy_script
+            NO_UNSUPPORTED_PLATFORM_ERROR NO_TRANSLATIONS
+            INCLUDE_PLUGINS ${extra_plugins}
+            PRE_EXCLUDE_REGEXES ${MESHIFY_PRE_EXCLUDE_REGEXES}
+            POST_EXCLUDE_REGEXES ${MESHIFY_POST_EXCLUDE_REGEXES})
+        install(SCRIPT ${deploy_script})
+    endif()
+endfunction()
+
 # Call once, after every add_subdirectory().
 function(meshify_finalize_install)
     get_property(targets GLOBAL PROPERTY MESHIFY_INSTALL_TARGETS)
