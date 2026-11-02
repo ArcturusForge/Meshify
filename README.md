@@ -18,6 +18,7 @@ Meshify is free software under the [GNU General Public License v3.0](LICENSE).
 
 | # | Question | Status |
 | --- | --- | --- |
-| [P1](prototypes/p1-token-identity) | Do fillets and other later steps survive upstream edits on Open CASCADE? | In progress |
+| [P1](prototypes/p1-token-identity) | Do fillets and other later steps survive upstream edits on Open CASCADE? | Passed: 20 of 20 edits |
+| [P2](prototypes/p2-occt-stress) | Does Open CASCADE handle 30 hard fillet, shell, offset, boolean and relief cases? | Passed: 27 of 27, all 3 bad inputs rejected |
 
 The architecture decision record is in [docs/adr/0001-core-stack.md](docs/adr/0001-core-stack.md).
