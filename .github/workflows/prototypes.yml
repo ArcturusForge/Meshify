@@ -1,0 +1,56 @@
+name: Prototypes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            packages: occt=7.8 cmake ninja cxx-compiler libgl-devel
+            prefix_suffix: ""
+            cmake_extra: ""
+          - os: macos-latest
+            packages: occt=7.8 cmake ninja cxx-compiler
+            prefix_suffix: ""
+            cmake_extra: ""
+          - os: windows-latest
+            packages: occt=7.8 cmake ninja
+            prefix_suffix: /Library
+            cmake_extra: -DCMAKE_CXX_COMPILER=cl
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: meshify
+          create-args: -c conda-forge ${{ matrix.packages }}
+          init-shell: bash
+          cache-environment: true
+
+      - name: Set up MSVC
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_PREFIX_PATH="$CONDA_PREFIX${{ matrix.prefix_suffix }}"
+          ${{ matrix.cmake_extra }}
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure

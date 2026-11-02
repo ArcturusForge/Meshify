@@ -13,3 +13,11 @@ Implementation has not started. The project is in **Stage 0**: small prototypes 
 ## Licence
 
 Meshify is free software under the [GNU General Public License v3.0](LICENSE).
+
+## Stage 0 prototypes
+
+| # | Question | Status |
+| --- | --- | --- |
+| [P1](prototypes/p1-token-identity) | Do fillets and other later steps survive upstream edits on Open CASCADE? | In progress |
+
+The architecture decision record is in [docs/adr/0001-core-stack.md](docs/adr/0001-core-stack.md).
