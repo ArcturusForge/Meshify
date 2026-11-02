@@ -184,7 +184,7 @@ TopoDS_Shape bracket() {
     return unify.Shape();
 }
 
-bool near(double a, double b) { return std::abs(a - b) < 1e-6; }
+bool approx(double a, double b) { return std::abs(a - b) < 1e-6; }
 
 // ---- Cases -----------------------------------------------------------------
 
@@ -201,20 +201,20 @@ std::vector<Case> cases() {
         {"Fillet", "Box, all 12 edges, r 1 mm", false, [] { auto b = box(0, 0, 0, 10, 10, 10); return fillet(b, allEdges(b), 1); }},
         {"Fillet", "Box, all edges, r 4.9 mm (near half the size)", false, [] { auto b = box(0, 0, 0, 10, 10, 10); return fillet(b, allEdges(b), 4.9); }},
         {"Fillet", "Box, all edges, r 6 mm (larger than half)", true, [] { auto b = box(0, 0, 0, 10, 10, 10); return fillet(b, allEdges(b), 6); }},
-        {"Fillet", "Cylinder top edge, r 2 mm", false, [] { auto c = cylinder(0, 0, 0, 10, 10); return fillet(c, edgesWhere(c, [](const gp_Pnt& p) { return near(p.Z(), 10); }), 2); }},
-        {"Fillet", "Token outer and inner rim edges, r 0.5 mm", false, [] { auto t = token(); return fillet(t, edgesWhere(t, [](const gp_Pnt& p) { return near(p.Z(), 4) || near(p.Z(), 0); }), 0.5); }},
-        {"Fillet", "Token inner rim, r 3 mm on a 0.8 mm recess", true, [] { auto t = token(); return fillet(t, edgesWhere(t, [](const gp_Pnt& p) { return near(p.Z(), 4) && std::hypot(p.X(), p.Y()) < 18; }), 3); }},
-        {"Fillet", "Bracket concave inner edge, r 3 mm", false, [] { auto b = bracket(); return fillet(b, edgesWhere(b, [](const gp_Pnt& p) { return near(p.X(), 10) && near(p.Z(), 10); }), 3); }},
+        {"Fillet", "Cylinder top edge, r 2 mm", false, [] { auto c = cylinder(0, 0, 0, 10, 10); return fillet(c, edgesWhere(c, [](const gp_Pnt& p) { return approx(p.Z(), 10); }), 2); }},
+        {"Fillet", "Token outer and inner rim edges, r 0.5 mm", false, [] { auto t = token(); return fillet(t, edgesWhere(t, [](const gp_Pnt& p) { return approx(p.Z(), 4) || approx(p.Z(), 0); }), 0.5); }},
+        {"Fillet", "Token inner rim, r 3 mm on a 0.8 mm recess", true, [] { auto t = token(); return fillet(t, edgesWhere(t, [](const gp_Pnt& p) { return approx(p.Z(), 4) && std::hypot(p.X(), p.Y()) < 18; }), 3); }},
+        {"Fillet", "Bracket concave inner edge, r 3 mm", false, [] { auto b = bracket(); return fillet(b, edgesWhere(b, [](const gp_Pnt& p) { return approx(p.X(), 10) && approx(p.Z(), 10); }), 3); }},
         {"Fillet", "Tee of two cylinders, intersection edge, r 1 mm", false, [] {
              auto t = fuse(cylinder(0, 0, -15, 5, 30), cylinder(-15, 0, 0, 4, 30, gp_Dir(1, 0, 0)));
              return fillet(t, edgesWhere(t, [](const gp_Pnt& p) { return std::abs(p.Z()) < 5.01 && std::abs(p.Y()) < 5.01 && std::abs(p.X()) < 5.01 && std::abs(p.X()) > 0.5; }), 1); }},
-        {"Fillet", "Box corner, three edges meeting, r 2 mm", false, [] { auto b = box(0, 0, 0, 10, 10, 10); return fillet(b, edgesWhere(b, [](const gp_Pnt& p) { return (near(p.X(), 10) && near(p.Y(), 10)) || (near(p.X(), 10) && near(p.Z(), 10)) || (near(p.Y(), 10) && near(p.Z(), 10)); }), 2); }},
-        {"Fillet", "Slot edges after a cut, r 0.5 mm", false, [] { auto s = cut(box(0, 0, 0, 30, 20, 10), box(10, -1, 5, 10, 22, 6)); return fillet(s, edgesWhere(s, [](const gp_Pnt& p) { return near(p.Z(), 10) && (near(p.X(), 10) || near(p.X(), 20)); }), 0.5); }},
+        {"Fillet", "Box corner, three edges meeting, r 2 mm", false, [] { auto b = box(0, 0, 0, 10, 10, 10); return fillet(b, edgesWhere(b, [](const gp_Pnt& p) { return (approx(p.X(), 10) && approx(p.Y(), 10)) || (approx(p.X(), 10) && approx(p.Z(), 10)) || (approx(p.Y(), 10) && approx(p.Z(), 10)); }), 2); }},
+        {"Fillet", "Slot edges after a cut, r 0.5 mm", false, [] { auto s = cut(box(0, 0, 0, 30, 20, 10), box(10, -1, 5, 10, 22, 6)); return fillet(s, edgesWhere(s, [](const gp_Pnt& p) { return approx(p.Z(), 10) && (approx(p.X(), 10) || approx(p.X(), 20)); }), 0.5); }},
         // Chamfers
         {"Chamfer", "Box, all edges, 1 mm", false, [] { auto b = box(0, 0, 0, 10, 10, 10); return chamfer(b, allEdges(b), 1); }},
-        {"Chamfer", "Cylinder top edge, 1.5 mm", false, [] { auto c = cylinder(0, 0, 0, 10, 10); return chamfer(c, edgesWhere(c, [](const gp_Pnt& p) { return near(p.Z(), 10); }), 1.5); }},
-        {"Chamfer", "Bracket concave inner edge, 2 mm", false, [] { auto b = bracket(); return chamfer(b, edgesWhere(b, [](const gp_Pnt& p) { return near(p.X(), 10) && near(p.Z(), 10); }), 2); }},
-        {"Chamfer", "Token outer top edge, 0.6 mm", false, [] { auto t = token(); return chamfer(t, edgesWhere(t, [](const gp_Pnt& p) { return near(p.Z(), 4) && std::hypot(p.X(), p.Y()) > 19; }), 0.6); }},
+        {"Chamfer", "Cylinder top edge, 1.5 mm", false, [] { auto c = cylinder(0, 0, 0, 10, 10); return chamfer(c, edgesWhere(c, [](const gp_Pnt& p) { return approx(p.Z(), 10); }), 1.5); }},
+        {"Chamfer", "Bracket concave inner edge, 2 mm", false, [] { auto b = bracket(); return chamfer(b, edgesWhere(b, [](const gp_Pnt& p) { return approx(p.X(), 10) && approx(p.Z(), 10); }), 2); }},
+        {"Chamfer", "Token outer top edge, 0.6 mm", false, [] { auto t = token(); return chamfer(t, edgesWhere(t, [](const gp_Pnt& p) { return approx(p.Z(), 4) && std::hypot(p.X(), p.Y()) > 19; }), 0.6); }},
         // Shells
         {"Shell", "Box, open top, 1 mm wall", false, [] { return shellOpenTop(box(0, 0, 0, 20, 20, 20), 1); }},
         {"Shell", "Cylinder, open top, 1.2 mm wall", false, [] { return shellOpenTop(cylinder(0, 0, 0, 10, 20), 1.2); }},
