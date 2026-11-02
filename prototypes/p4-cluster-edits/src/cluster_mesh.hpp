@@ -62,6 +62,9 @@ public:
     // `depth` (smooth falloff; negative digs in) and updates only what that changes.
     EditResult brush(const Vec3& center, float radius, float depth);
 
+    // Nearest hit of a ray on the surface (for picking a brush position).
+    bool raycast(const Vec3& origin, const Vec3& direction, Vec3* hit) const;
+
     // Recomputes every normal, render vertex and bound from the authoritative
     // positions. The slow reference path used to check `brush`.
     void rebuildAll();

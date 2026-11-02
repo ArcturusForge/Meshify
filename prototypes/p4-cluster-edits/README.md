@@ -1,6 +1,6 @@
-# P4 step 1: local brush edits on a clustered dense mesh
+# P4: local brush edits on a clustered dense mesh
 
-Question from ADR-0001: can a 5-million-vertex model take local edits and show them in under 50 ms? Most of that budget belongs to the GPU (upload and draw), so the CPU side must be small. This step measures the CPU side. The GPU side is step 2 and needs a machine with a graphics card.
+Question from ADR-0001: can a 5-million-vertex model take local edits and show them in under 50 ms? Most of that budget belongs to the GPU (upload and draw), so the CPU side must be small. Step 1 measures the CPU side. Step 2, the viewer below, measures the whole path through a GPU. It needs a machine with a graphics card, so the final numbers come from Pixel's machine.
 
 ## What it does
 
@@ -77,3 +77,29 @@ cmake --build build --target p4_cluster_tests p4_edit_bench
 ```
 
 `p4_edit_bench` exits 1 if any brush's p95 exceeds the budget. At 5M vertices it reports FAIL because of the broad brush, which is the finding above. `ctest` runs a 500k-vertex version that must pass, so the check runs on every system in CI. meshoptimizer is fetched by CMake.
+
+## Step 2: the viewer (`meshify_p4_viewer`)
+
+A Qt RHI viewer (Qt 6.7 or newer, `QRhiWidget`) that draws the mesh and times edits end to end. The vertex buffer is the cluster-ordered render copy; the index buffer is built once. An edit uploads only the byte ranges `brush()` reports, then draws.
+
+```sh
+meshify_p4_viewer --vertices 5000000          # interactive
+meshify_p4_viewer --vertices 5000000 --bench  # scripted edits, prints a table
+```
+
+- **Interactive:** left mouse sculpts (hold Shift to dig in), right mouse orbits, wheel zooms. The window title shows the cost of the last edit and the frame time.
+- **`--bench`:** applies scripted edits with three brush sizes. For each one it measures the time from the start of the edit until the GPU has finished drawing the result and the image is read back (`grabFramebuffer`). It also reports one frame with no edit, for comparison, and the first frame with the full upload. It exits with code 1 if the 95th percentile of that time exceeds 50 ms for any brush.
+- **`--shot out.png`:** saves a picture after some large edits, and checks that the picture drawn from partial uploads is identical to one drawn after uploading everything. That is the check that the GPU copy stays in step with the CPU copy.
+- **`--api opengl`** forces OpenGL. The default is Direct3D 11 on Windows, Metal on macOS and OpenGL on Linux. The conda-forge Qt used for releases has no Vulkan support.
+
+The release archive includes it as `bin/meshify_p4_viewer`.
+
+### What was checked here
+
+The sandbox has no graphics card, so the viewer ran on Mesa's software renderer (llvmpipe) under a virtual display. That shows the viewer works: the mesh draws correctly, edits appear, and partial uploads match a full upload. It says nothing about speed, and the frame times from it should be ignored.
+
+### Limits of the viewer
+
+- It draws every triangle in one call. There is no cluster culling, level of detail or occlusion culling, so drawing time is the plain cost of the whole mesh. A 5M-vertex mesh is about 10 million triangles.
+- The readback in `--bench` adds a little (a few ms at 1280x720) to every figure, including the no-edit frame; the difference between the two is the cost of the edit itself.
+- It measures until the GPU finishes, not until the pixels reach the display, so display refresh and compositor delay are not counted.

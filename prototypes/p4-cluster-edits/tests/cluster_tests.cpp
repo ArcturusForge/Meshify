@@ -130,6 +130,19 @@ void editChangesTheSurface() {
     CHECK(std::abs(moved - 0.5f) < 1e-3f);
 }
 
+void rayPicksTheSurface() {
+    const ClusterMesh m = ClusterMesh::makeSculpt(kSize, 19);
+    Vec3 hit;
+    // From outside, straight at the centre: lands on the surface about 40 mm from it.
+    CHECK(m.raycast({0, 0, 100}, {0, 0, -1}, &hit));
+    CHECK(std::abs(hit.z - 40.0f) < 3.0f);
+    // The same ray from inside the sphere's far side hits the other way round.
+    CHECK(m.raycast({0, 0, -100}, {0, 0, 1}, &hit));
+    CHECK(std::abs(hit.z + 40.0f) < 3.0f);
+    // A ray that misses.
+    CHECK(!m.raycast({200, 0, 100}, {0, 0, -1}, &hit));
+}
+
 }  // namespace
 
 int main() {
@@ -139,6 +152,7 @@ int main() {
         {"reported ranges cover every change", reportedRangesCoverEveryChange},
         {"edits stay local", editsStayLocal},
         {"brush moves vertices by the requested depth", editChangesTheSurface},
+        {"ray picks the surface", rayPicksTheSurface},
     };
     for (const auto& [name, fn] : tests) {
         const int before = failures;
