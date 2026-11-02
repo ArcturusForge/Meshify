@@ -1,0 +1,8 @@
+{
+  "name": "array_tools",
+  "version": "1.0.0",
+  "api": 1,
+  "entry": "plugin.py",
+  "units": "mm",
+  "operations": ["linear_array"]
+}
