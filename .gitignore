@@ -1,0 +1,7 @@
+build/
+out/
+*.stl
+*.brep
+.vscode/
+.idea/
+CMakeUserPresets.json
