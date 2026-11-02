@@ -13,7 +13,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            packages: occt=7.8 cmake ninja cxx-compiler
+            packages: occt=7.8 cmake ninja cxx-compiler libgl-devel
             prefix_suffix: ""
             cmake_extra: ""
           - os: macos-latest
