@@ -7,7 +7,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 enable_testing()
 
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+include(MeshifyPackaging)
+
 # Stage 0 prototypes. Each one answers a single architecture question from
 # docs/adr/0001-core-stack.md and is not production code.
 add_subdirectory(prototypes/p1-token-identity)
 add_subdirectory(prototypes/p2-occt-stress)
+
+meshify_finalize_install()
