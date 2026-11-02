@@ -69,6 +69,7 @@ jobs:
           -DCMAKE_PREFIX_PATH="$CONDA_PREFIX${{ matrix.prefix_suffix }}"
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           -DMESHIFY_VERSION=${{ inputs.version }}
+          -DMESHIFY_REQUIRE_QT=ON
           ${{ matrix.cmake_extra }}
 
       - name: Build
