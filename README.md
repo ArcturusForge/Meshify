@@ -27,5 +27,6 @@ Meshify is free software under the [GNU General Public License v3.0](LICENSE).
 | [P3](prototypes/p3-docking-shell) | Does a Qt 6 docking shell recover a layout saved on a disconnected monitor (UX-03)? | Passed on all three systems; real two-monitor run pending |
 | [P4](prototypes/p4-cluster-edits) | Can a 5M-vertex model take local edits in under 50 ms? | Passes on an integrated Intel GPU (p95 19, 22 and 42 ms for fine, medium and broad brushes); the broad brush's worst case is still over 50 ms |
 | [P5](prototypes/p5-plugin-history) | Can a Python plugin operation take part in undo, save and reopen, and fail safely? | Yes: nine failure cases leave the model untouched and a missing plugin is reported on reopen; JSON over a pipe is too slow for dense meshes |
+| P6 | Do supports in an STL survive Blueprint Studio and a real print? | Deferred: needs the printer, which is not available. Moved to a later step; Stage 1 does not depend on it |
 
 The architecture decision record is in [docs/adr/0001-core-stack.md](docs/adr/0001-core-stack.md).
