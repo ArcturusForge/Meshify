@@ -25,7 +25,7 @@ ctest --test-dir build --output-on-failure
 
 Build one target when that is all you changed: `cmake --build build --target p1_token_tests`.
 OCCT on Ubuntu: `apt install libocct-modeling-algorithms-dev libocct-data-exchange-dev libtbb-dev`.
-Qt 6 on Ubuntu (P3): `apt install qt6-base-dev qt6-base-private-dev libxcb1-dev`; the docking library is fetched by CMake. Test with `QT_QPA_PLATFORM=offscreen`.
+Qt 6 on Ubuntu (P3): `apt install qt6-base-dev qt6-base-private-dev libxcb1-dev`; the docking library (ADS) and meshoptimizer (P4) are fetched by CMake. Test with `QT_QPA_PLATFORM=offscreen`.
 OCCT 7.8 moved the STL writer to `TKDESTL`; CMake already handles both.
 
 ## Releases
