@@ -1,9 +1,15 @@
 # P3 needs Qt 6. Where it is missing the prototype is skipped, so the OCCT
 # prototypes still build on machines without Qt.
 option(MESHIFY_REQUIRE_QT "Fail instead of skipping P3 when Qt 6 is missing (CI sets this)" OFF)
-# GuiPrivate is listed here because ADS links Qt6::GuiPrivate on every system
-# but only asks for it itself on Linux.
-find_package(Qt6 QUIET COMPONENTS Core Gui Widgets GuiPrivate)
+find_package(Qt6 QUIET COMPONENTS Core Gui Widgets)
+# From Qt 6.9 the private GUI headers are a separate component. ADS links
+# Qt6::GuiPrivate on every system but only asks for it itself on Linux.
+if(Qt6_FOUND AND Qt6_VERSION VERSION_GREATER_EQUAL 6.9)
+    find_package(Qt6 QUIET COMPONENTS GuiPrivate)
+    if(NOT Qt6GuiPrivate_FOUND)
+        set(Qt6_FOUND FALSE)
+    endif()
+endif()
 if(NOT Qt6_FOUND)
     if(MESHIFY_REQUIRE_QT)
         message(FATAL_ERROR "Qt 6 (with GuiPrivate) is required but was not found")
