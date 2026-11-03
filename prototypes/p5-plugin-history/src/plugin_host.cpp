@@ -1,5 +1,7 @@
 #include "plugin_host.hpp"
 
+#include "geometry_io.hpp"
+
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
@@ -7,6 +9,7 @@
 #include <QJsonDocument>
 #include <QProcess>
 #include <QStandardPaths>
+#include <QTemporaryDir>
 
 namespace p5 {
 
@@ -63,8 +66,21 @@ CallResult PluginManager::call(const QString& plugin, const QString& op, const Q
         return fail(QString("plugin '%1' %2 has no operation '%3'").arg(plugin, p->version, op));
     if (python_.isEmpty()) return fail("no Python interpreter found (set MESHIFY_PYTHON)");
 
-    const QJsonObject req{{"api", 1}, {"entry", p->entry}, {"op", op},
-                          {"params", params}, {"geometry", toJson(input)}};
+    const bool bin = transport_ == Transport::Binary;
+    QTemporaryDir tmp;  // holds the binary files; removed when the call ends
+    QJsonObject req{{"entry", p->entry}, {"op", op}, {"params", params}};
+    const QString inFile = tmp.filePath("in.msh"), outFile = tmp.filePath("out.msh");
+    if (bin) {
+        QString why;
+        if (!tmp.isValid() || !writeBinary(inFile, input, why))
+            return fail("could not prepare the geometry for the plugin: " + why);
+        req["api"] = 2;
+        req["input_file"] = inFile;
+        req["output_file"] = outFile;
+    } else {
+        req["api"] = 1;
+        req["geometry"] = toJson(input);
+    }
     QProcess proc;
     proc.setProcessChannelMode(QProcess::SeparateChannels);
     proc.start(python_, {host_});
@@ -87,8 +103,11 @@ CallResult PluginManager::call(const QString& plugin, const QString& op, const Q
     const QJsonObject o = doc.object();
     if (!o.value("ok").toBool()) return fail(o.value("error").toString("plugin reported a failure"));
     QString why;
-    if (!fromJson(o.value("geometry").toObject(), r.geometry, why))
+    if (bin) {
+        if (!readBinary(outFile, r.geometry, why)) return fail(why);
+    } else if (!fromJson(o.value("geometry").toObject(), r.geometry, why)) {
         return fail("plugin result rejected: " + why);
+    }
     r.ok = true;
     r.ms = clock.nsecsElapsed() / 1e6;
     return r;

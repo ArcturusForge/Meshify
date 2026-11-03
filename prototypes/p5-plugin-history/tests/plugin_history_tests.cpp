@@ -32,6 +32,7 @@ struct Plugins {
         const QString root = dir.path();
         copyPlugin(P5_PLUGINS_DIR "/array_tools", root + "/array_tools", version);
         if (withFaulty) copyPlugin(P5_TEST_PLUGINS_DIR "/faulty", root + "/faulty", nullptr);
+        copyPlugin(P5_TEST_PLUGINS_DIR "/bench", root + "/bench", nullptr);
         pm.scan(root);
     }
     static void copyPlugin(const QString& from, const QString& to, const char* version) {
@@ -71,9 +72,11 @@ static void testUndoRedo() {
     CHECK(d.stepCount() == 2);
 }
 
-static void testFailuresCommitNothing() {
-    std::puts("HIS-01: failed plugin operations leave the committed model untouched");
+static void testFailuresCommitNothing(Transport tr) {
+    std::printf("HIS-01: failed plugin operations leave the committed model untouched (%s)\n",
+                tr == Transport::Json ? "json" : "binary");
     Plugins pl;
+    pl.pm.setTransport(tr);
     Document d;
     d.applyNative("box", box(10));
     d.applyPlugin(pl.pm, "array_tools", "linear_array", arr(2));
@@ -88,7 +91,7 @@ static void testFailuresCommitNothing() {
         {"faulty", "crash", {}, 10000, "died"},
         {"faulty", "hang", {}, 1500, "did not finish"},
         {"faulty", "bad_index", {}, 10000, "outside"},
-        {"faulty", "nan_out", {}, 10000, "not valid JSON"},
+        {"faulty", "nan_out", {}, 10000, tr == Transport::Json ? "not valid JSON" : "not a finite number"},
         {"faulty", "no_such_op", {}, 10000, "no operation"},
         {"nobody", "x", {}, 10000, "not installed"},
     };
@@ -104,6 +107,34 @@ static void testFailuresCommitNothing() {
     // A plugin that prints to stdout still works: its output goes to stderr.
     CHECK(d.applyPlugin(pl.pm, "faulty", "chatty", {}).ok);
     CHECK(d.current() == before);
+}
+
+static void testTransports() {
+    std::puts("JSON and binary hand-off give identical results");
+    Plugins pl;
+    Geometry big;  // 3,001 vertices with awkward doubles
+    for (int i = 0; i < 3001; ++i) {
+        big.v.push_back(i / 3.0);
+        big.v.push_back(-i * 0.1);
+        big.v.push_back(1e-7 * i);
+    }
+    for (uint32_t i = 0; i + 2 < 3001; ++i) { big.t.push_back(i); big.t.push_back(i + 1); big.t.push_back(i + 2); }
+    for (const char* mode : {"echo", "array"}) {
+        Geometry out[2];
+        for (int k = 0; k < 2; ++k) {
+            pl.pm.setTransport(k ? Transport::Binary : Transport::Json);
+            const CallResult c = mode[0] == 'e' ? pl.pm.call("bench", "echo", {}, big)
+                                                : pl.pm.call("array_tools", "linear_array", arr(3), big);
+            CHECK(c.ok);
+            out[k] = c.geometry;
+        }
+        CHECK(out[0] == out[1]);
+        if (mode[0] == 'e') CHECK(out[1] == big);
+        else CHECK(out[1].vertexCount() == 3 * big.vertexCount());
+    }
+    // An empty mesh survives the binary hand-off too.
+    pl.pm.setTransport(Transport::Binary);
+    CHECK(pl.pm.call("bench", "echo", {}, Geometry{}).ok);
 }
 
 static void testSaveReopen() {
@@ -247,7 +278,9 @@ int main(int argc, char** argv) {
     }
     std::printf("Python: %s\n", qPrintable(probe.python()));
     testUndoRedo();
-    testFailuresCommitNothing();
+    testFailuresCommitNothing(Transport::Binary);
+    testFailuresCommitNothing(Transport::Json);
+    testTransports();
     testSaveReopen();
     testPluginMissing();
     testVersionDiffers();

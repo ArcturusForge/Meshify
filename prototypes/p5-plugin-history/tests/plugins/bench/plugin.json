@@ -1,0 +1,7 @@
+{
+  "name": "bench",
+  "version": "1.0.0",
+  "api": 2,
+  "entry": "plugin.py",
+  "operations": ["echo"]
+}

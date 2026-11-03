@@ -24,6 +24,12 @@ struct CallResult {
     double ms = 0;   // wall time of the whole call
 };
 
+// How geometry travels between the app and the plugin process.
+enum class Transport {
+    Json,    // API 1: vertices and triangles as JSON arrays on the pipe
+    Binary,  // API 2: raw binary files; the plugin maps the input, nothing is parsed
+};
+
 class PluginManager {
 public:
     // `hostScript` is meshify_host.py. An empty `python` searches PATH
@@ -35,6 +41,8 @@ public:
     int scan(const QString& root);
 
     const PluginInfo* find(const QString& name) const;
+    void setTransport(Transport t) { transport_ = t; }
+    Transport transport() const { return transport_; }
     bool pythonFound() const { return !python_.isEmpty(); }
     QString python() const { return python_; }
 
@@ -43,6 +51,7 @@ public:
 
 private:
     QString host_, python_;
+    Transport transport_ = Transport::Binary;
     std::map<QString, PluginInfo> plugins_;
 };
 
