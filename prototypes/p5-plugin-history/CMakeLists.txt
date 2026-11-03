@@ -11,7 +11,7 @@ if(NOT Qt6_FOUND)
 endif()
 
 set(CMAKE_AUTOMOC OFF)
-add_library(p5_history STATIC src/geometry.cpp src/plugin_host.cpp src/document.cpp)
+add_library(p5_history STATIC src/geometry.cpp src/geometry_io.cpp src/plugin_host.cpp src/document.cpp)
 target_include_directories(p5_history PUBLIC src)
 target_link_libraries(p5_history PUBLIC Qt6::Core)
 

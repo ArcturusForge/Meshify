@@ -42,9 +42,31 @@ Question from ADR-0001: can an operation written in Python take part in undo, sa
 
 1. **The contract works.** An operation written in Python takes part in undo, save and reopen, and none of nine ways of failing can change the committed model. A separate process makes this cheap to guarantee: the plugin has no way to reach the document. It is not a security boundary (the plugin can still read and write files), and the brief says so too.
 2. **Starting Python costs about 30 ms per call.** That is fine for an operation the user applies. It is too slow to call per brush stroke.
-3. **JSON over a pipe does not scale to dense meshes.** Time grows roughly linearly: about 0.6 s for a 100,000-vertex input, so a 5-million-vertex mesh would take around 30 s each way. Large geometry needs a binary hand-off (shared memory or a memory-mapped file) with the plugin reading arrays in place, for example as NumPy views. This is the main open question the next step would answer.
+3. **JSON over a pipe does not scale to dense meshes.** Time grows roughly linearly: about 0.4 s for 100,000 vertices and 3.8 s for 1 million, so 5 million would take around 20 s. Step 2 below replaces it with a binary hand-off, which fixes this.
 4. **Storing every full result is wasteful.** The 100k history is 11 MB for five steps. The brief's plan (shared unchanged geometry, local differences, checkpoints) is needed, and the P4 cluster layout is a natural unit for sharing.
 5. **A missing plugin is a normal state, not an error.** Every history step carries the plugin name and version it needs, so the open dialog can list them before anything runs.
+
+## Step 2: binary hand-off (plugin API 2)
+
+The app writes the mesh to a temporary binary file (header, then doubles in mm, then uint32 indices). The plugin process maps that file read-only and receives zero-copy `memoryview`s of it; NumPy wraps them with `numpy.frombuffer`. The result goes back the same way, as a file, and the app checks the file size against its header and runs the same validity check as before. The reply on the pipe is a few bytes. JSON (API 1) is still supported and the tests run the failure cases through both.
+
+`p5_plugin_bench` compares the two. `echo` returns the mesh unchanged, so it measures only the hand-off (same machine as above, 7 calls per row, 3 for the 1M JSON row):
+
+| Vertices | JSON echo p50 (ms) | p95 | Binary echo p50 (ms) | p95 | Speed-up (p50) |
+| --- | --- | --- | --- | --- | --- |
+| 8 | 30 | 35 | 29 | 46 | 1x |
+| 1,000 | 29 | 31 | 30 | 38 | 1x |
+| 10,000 | 57 | 68 | 29 | 32 | 2x |
+| 100,000 | 370 | 396 | 31 | 35 | 12x |
+| 1,000,000 | 3,780 | 3,803 | 86 | 377 | 44x |
+| 5,000,000 | not run | | 408 | 1,506 | |
+
+The example plugin's own operation (doubling the mesh in pure Python) shows that the rest is the plugin's own work: 723 ms with JSON and 196 ms with binary at 100,000 vertices.
+
+- **Hand-off cost is now close to flat.** Up to 100,000 vertices a call costs the same 30 ms as an empty one; 5 million vertices cost about 0.4 s typical. That meets the proposed threshold (at most 50 ms up to 10,000 vertices; larger meshes only through a binary hand-off).
+- **The p95 at 1M and 5M is noisy** (377 and 1,506 ms against 86 and 408 ms medians). It is disk and page-cache behaviour on a VM; a RAM-backed location (shared memory, `/dev/shm` or a named mapping) would likely remove it but was not tried.
+- **A plugin that loops over every vertex in Python is still slow** at this size regardless of transport. Real plugins on dense meshes need NumPy or compiled code; that is a plugin-authoring rule, not a hand-off problem.
+- **Not tested:** NumPy itself (not installed here; the views use only the standard library), Windows and macOS memory-mapping behaviour beyond what CI exercises, and the saved project file, which is still JSON.
 
 ## Not covered, and limits
 
@@ -52,6 +74,7 @@ Question from ADR-0001: can an operation written in Python take part in undo, sa
 - **A crash between two saves loses uncommitted steps.** Atomic save protects the file on disk, but there is no autosave or journal yet.
 - **A file with one bad step is refused whole.** Recovering the good steps around it is not done.
 - **No permissions or isolation beyond the process boundary.**
+- **The saved project file is still JSON.** Only the plugin hand-off is binary. A native format for large meshes is a separate decision.
 - **Replay equality is exact.** A plugin that gives slightly different floating-point results on another machine would be reported as "different"; a tolerance policy is not designed.
 - **No preview, parameter editing, suppression or reordering** of recorded steps.
 - **No embedded Python.** Embedding (pybind11) would be faster per call but ties the app to one Python build on three platforms; the subprocess design avoids that. Not compared here.

@@ -4,7 +4,8 @@ import time
 
 
 def raise_midway(params, geo):
-    geo["vertices"].append(1.0)  # half-built result, then failure
+    partial = list(geo["vertices"]) + [1.0]  # half-built result, then failure
+    del partial
     raise RuntimeError("boom after partly building")
 
 
